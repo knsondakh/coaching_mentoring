@@ -499,6 +499,22 @@
         <option value="sudah">Sudah Coaching &amp; Mentoring</option>
         <option value="belum">Belum Coaching &amp; Mentoring</option>
       </select>
+      <!-- updated v.1.2 -->
+      <select id="bulanFilter">
+        <option value="ALL">Semua Bulan (Total Tahunan)</option>
+        <option value="Januari">Januari</option>
+        <option value="Februari">Februari</option>
+        <option value="Maret">Maret</option>
+        <option value="April">April</option>
+        <option value="Mei">Mei</option>
+        <option value="Juni">Juni</option>
+        <option value="Juli">Juli</option>
+        <option value="Agustus">Agustus</option>
+        <option value="September">September</option>
+        <option value="Oktober">Oktober</option>
+        <option value="November">November</option>
+        <option value="Desember">Desember</option>
+      </select>
       <label class="target">Target/tahun
         <input type="number" id="targetInput" value="12" min="1" max="24">
       </label>
@@ -508,11 +524,7 @@
       <input type="file" id="fileInputMaster" accept=".xlsx,.xls">
     </div>
 
-    <!-- tambahan -->
-    <div class="monthfilter" id="monthFilterBar">
-      <span class="mf-label">Tampilkan Bulan:</span>
-      <span class="mf-chip all active" data-month="ALL">Semua</span>
-    </div>
+   
 
 
 
@@ -535,7 +547,13 @@
       </select>
       <button class="btn" id="downloadRekapBtn">⬇ Download Excel</button>
       <!-- update v.1.2 -->
-           <button class="btn secondary" id="downloadTahunanBtn">⬇ Download Rekap Tahunan (Per Bulan)</button>
+      <button class="btn secondary" id="downloadTahunanBtn">⬇ Download Rekap Tahunan (Per Bulan)</button>
+    </div>
+
+     <!-- tambahan -->
+    <div class="monthfilter" id="monthFilterBar">
+      <span class="mf-label">Tampilkan Bulan:</span>
+      <span class="mf-chip all active" data-month="ALL">Semua</span>
     </div>
 
     <div class="legend">
@@ -640,17 +658,20 @@
     }
     // end tambahan v.1
 
-    function renderStats(list) {
+    // update v.1.2
+    function renderStats(list, bulanSel) {
+      bulanSel = bulanSel || 'ALL';
       const total = list.length;
-      const sudah = list.filter(e => computeTotal(e) > 0).length;
+      const sudah = list.filter(e => getFilterCount(e, bulanSel) > 0).length;
       const belum = total - sudah;
-      const totalInput = list.reduce((s, e) => s + computeTotal(e), 0);
+      const totalInput = list.reduce((s, e) => s + getFilterCount(e, bulanSel), 0);
+      const labelSuffix = bulanSel === 'ALL' ? '' : ` - ${bulanSel}`;
       const el = document.getElementById('statsRow');
       el.innerHTML = `
     <div class="stat"><div class="num">${total}</div><div class="lbl">Total Karyawan (Master)</div></div>
-    <div class="stat ok"><div class="num">${sudah}</div><div class="lbl">Sudah Coaching & Mentoring</div></div>
-    <div class="stat warn"><div class="num">${belum}</div><div class="lbl">Belum Coaching & Mentoring</div></div>
-    <div class="stat"><div class="num">${totalInput}</div><div class="lbl">Total Input Tercatat</div></div>
+    <div class="stat ok"><div class="num">${sudah}</div><div class="lbl">Sudah Coaching & Mentoring${labelSuffix}</div></div>
+    <div class="stat warn"><div class="num">${belum}</div><div class="lbl">Belum Coaching & Mentoring${labelSuffix}</div></div>
+    <div class="stat"><div class="num">${totalInput}</div><div class="lbl">Total Input Tercatat${labelSuffix}</div></div>
   `;
     }
 
@@ -703,24 +724,34 @@
       });
     }
 
+    // update v.1.2
+
+    function getFilterCount(emp, bulanSel) {
+      if (bulanSel === 'ALL') return computeTotal(emp);
+      return (emp.months[bulanSel] || []).length;
+    }
+
     function applyFilters() {
       const q = document.getElementById('searchBox').value.trim().toLowerCase();
       const ar = document.getElementById('areaFilter').value;
       const st = document.getElementById('statusFilter').value;
+      const bl = document.getElementById('bulanFilter').value;
       let list = EMPLOYEES.filter(e => {
         if (q && !(e.nama.toLowerCase().includes(q) || e.nik.toLowerCase().includes(q))) return false;
         if (ar && e.area !== ar) return false;
-        if (st === 'sudah' && computeTotal(e) === 0) return false;
-        if (st === 'belum' && computeTotal(e) > 0) return false;
+        const cnt = getFilterCount(e, bl);
+        if (st === 'sudah' && cnt === 0) return false;
+        if (st === 'belum' && cnt > 0) return false;
         return true;
       });
-      renderStats(list);
+      renderStats(list, bl);
       renderRows(list);
     }
 
     document.getElementById('searchBox').addEventListener('input', applyFilters);
     document.getElementById('areaFilter').addEventListener('change', applyFilters);
     document.getElementById('statusFilter').addEventListener('change', applyFilters);
+    document.getElementById('bulanFilter').addEventListener('change', applyFilters);
     document.getElementById('targetInput').addEventListener('input', (e) => {
       TARGET = parseInt(e.target.value) || 12;
       applyFilters();
@@ -836,119 +867,119 @@
     }
 
     // update v.1.2
-    function downloadRekapExcel(){
-  const bulanSel = document.getElementById('rekapBulan').value;
-  const areaSel = document.getElementById('rekapArea').value;
-  const monthsToProcess = bulanSel === 'ALL' ? MONTHS : [bulanSel];
+    function downloadRekapExcel() {
+      const bulanSel = document.getElementById('rekapBulan').value;
+      const areaSel = document.getElementById('rekapArea').value;
+      const monthsToProcess = bulanSel === 'ALL' ? MONTHS : [bulanSel];
 
-  let list = EMPLOYEES;
-  if(areaSel !== 'ALL'){
-    list = list.filter(e => e.area === areaSel);
-  }
+      let list = EMPLOYEES;
+      if (areaSel !== 'ALL') {
+        list = list.filter(e => e.area === areaSel);
+      }
 
-  const grouped = { sudah: [], proses: [], ditolak: [], belum: [] };
-  const counters = { sudah: 0, proses: 0, ditolak: 0, belum: 0 };
+      const grouped = { sudah: [], proses: [], ditolak: [], belum: [] };
+      const counters = { sudah: 0, proses: 0, ditolak: 0, belum: 0 };
 
-  list.forEach(emp=>{
-    monthsToProcess.forEach(m=>{
-      const arr = emp.months[m] || [];
-      arr.forEach(status=>{
-        const cat = statusCategory(status);
-        counters[cat] += 1;
-        grouped[cat].push({
-          no: counters[cat],
-          nik: emp.nik,
-          nama: emp.nama,
-          unit: emp.cabang || emp.unit || '',
-          status: status
+      list.forEach(emp => {
+        monthsToProcess.forEach(m => {
+          const arr = emp.months[m] || [];
+          arr.forEach(status => {
+            const cat = statusCategory(status);
+            counters[cat] += 1;
+            grouped[cat].push({
+              no: counters[cat],
+              nik: emp.nik,
+              nama: emp.nama,
+              unit: emp.cabang || emp.unit || '',
+              status: status
+            });
+          });
         });
-      });
-    });
 
-    // Belum melakukan coaching & mentoring
-    // - Jika bulan tertentu dipilih: cek kosong di bulan itu saja
-    // - Jika "Semua Bulan" dipilih: cek kosong di sepanjang tahun (belum pernah sama sekali)
-    const belumDiBulanIni = bulanSel === 'ALL'
-      ? computeTotal(emp) === 0
-      : (emp.months[bulanSel] || []).length === 0;
+        // Belum melakukan coaching & mentoring
+        // - Jika bulan tertentu dipilih: cek kosong di bulan itu saja
+        // - Jika "Semua Bulan" dipilih: cek kosong di sepanjang tahun (belum pernah sama sekali)
+        const belumDiBulanIni = bulanSel === 'ALL'
+          ? computeTotal(emp) === 0
+          : (emp.months[bulanSel] || []).length === 0;
 
-    if(belumDiBulanIni){
-      counters.belum += 1;
-      grouped.belum.push({
-        no: counters.belum,
-        nik: emp.nik,
-        nama: emp.nama,
-        unit: emp.cabang || emp.unit || '',
-        status: 'Belum Coaching & Mentoring'
+        if (belumDiBulanIni) {
+          counters.belum += 1;
+          grouped.belum.push({
+            no: counters.belum,
+            nik: emp.nik,
+            nama: emp.nama,
+            unit: emp.cabang || emp.unit || '',
+            status: 'Belum Coaching & Mentoring'
+          });
+        }
       });
+
+      const totalRows = grouped.sudah.length + grouped.proses.length + grouped.ditolak.length + grouped.belum.length;
+      if (totalRows === 0) {
+        alert('Tidak ada data untuk pilihan Bulan/Area tersebut.');
+        return;
+      }
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, rowsToSheet(grouped.sudah), 'Sudah (Diterima)');
+      XLSX.utils.book_append_sheet(wb, rowsToSheet(grouped.proses), 'Belum (Proses)');
+      XLSX.utils.book_append_sheet(wb, rowsToSheet(grouped.ditolak), 'Ditolak');
+      XLSX.utils.book_append_sheet(wb, rowsToSheet(grouped.belum), 'Belum Coaching');
+
+      const bulanLabel = bulanSel === 'ALL' ? 'SemuaBulan' : bulanSel;
+      const areaLabel = areaSel === 'ALL' ? 'SemuaArea' : areaSel.replace(/[^a-zA-Z0-9]+/g, '');
+      XLSX.writeFile(wb, `Rekap_Coaching_${bulanLabel}_${areaLabel}.xlsx`);
     }
-  });
+    // update v.1.2
+    function downloadRekapTahunan() {
+      const areaSel = document.getElementById('rekapArea').value;
 
-  const totalRows = grouped.sudah.length + grouped.proses.length + grouped.ditolak.length + grouped.belum.length;
-  if(totalRows === 0){
-    alert('Tidak ada data untuk pilihan Bulan/Area tersebut.');
-    return;
-  }
+      let list = EMPLOYEES;
+      if (areaSel !== 'ALL') {
+        list = list.filter(e => e.area === areaSel);
+      }
 
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, rowsToSheet(grouped.sudah), 'Sudah (Diterima)');
-  XLSX.utils.book_append_sheet(wb, rowsToSheet(grouped.proses), 'Belum (Proses)');
-  XLSX.utils.book_append_sheet(wb, rowsToSheet(grouped.ditolak), 'Ditolak');
-  XLSX.utils.book_append_sheet(wb, rowsToSheet(grouped.belum), 'Belum Coaching');
+      if (list.length === 0) {
+        alert('Tidak ada data karyawan untuk Area tersebut.');
+        return;
+      }
 
-  const bulanLabel = bulanSel === 'ALL' ? 'SemuaBulan' : bulanSel;
-  const areaLabel = areaSel === 'ALL' ? 'SemuaArea' : areaSel.replace(/[^a-zA-Z0-9]+/g,'');
-  XLSX.writeFile(wb, `Rekap_Coaching_${bulanLabel}_${areaLabel}.xlsx`);
-}
-// update v.1.2
-function downloadRekapTahunan(){
-  const areaSel = document.getElementById('rekapArea').value;
+      const header = ['No', 'NIK', 'Nama', 'Unit Kerja', ...MONTHS, 'Total', 'Sisa'];
+      const aoa = [header];
 
-  let list = EMPLOYEES;
-  if(areaSel !== 'ALL'){
-    list = list.filter(e => e.area === areaSel);
-  }
+      list.forEach((emp, idx) => {
+        const total = computeTotal(emp);
+        const sisa = Math.max(TARGET - total, 0);
+        const row = [
+          idx + 1,
+          emp.nik,
+          emp.nama,
+          emp.cabang || emp.unit || ''
+        ];
+        MONTHS.forEach(m => {
+          row.push((emp.months[m] || []).length);
+        });
+        row.push(total, sisa);
+        aoa.push(row);
+      });
 
-  if(list.length === 0){
-    alert('Tidak ada data karyawan untuk Area tersebut.');
-    return;
-  }
+      const ws = XLSX.utils.aoa_to_sheet(aoa);
+      ws['!cols'] = [
+        { wch: 5 }, { wch: 10 }, { wch: 32 }, { wch: 32 },
+        ...MONTHS.map(() => ({ wch: 9 })),
+        { wch: 8 }, { wch: 8 }
+      ];
 
-  const header = ['No','NIK','Nama','Unit Kerja', ...MONTHS, 'Total', 'Sisa'];
-  const aoa = [header];
+      const wb = XLSX.utils.book_new();
+      const sheetLabel = areaSel === 'ALL' ? 'Rekap Tahunan' : areaSel.substring(0, 31);
+      XLSX.utils.book_append_sheet(wb, ws, sheetLabel);
 
-  list.forEach((emp, idx)=>{
-    const total = computeTotal(emp);
-    const sisa = Math.max(TARGET - total, 0);
-    const row = [
-      idx + 1,
-      emp.nik,
-      emp.nama,
-      emp.cabang || emp.unit || ''
-    ];
-    MONTHS.forEach(m=>{
-      row.push((emp.months[m] || []).length);
-    });
-    row.push(total, sisa);
-    aoa.push(row);
-  });
+      const areaLabel = areaSel === 'ALL' ? 'SemuaArea' : areaSel.replace(/[^a-zA-Z0-9]+/g, '');
+      XLSX.writeFile(wb, `Rekap_Tahunan_Coaching_${areaLabel}_Target${TARGET}.xlsx`);
+    }
 
-  const ws = XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols'] = [
-    {wch:5}, {wch:10}, {wch:32}, {wch:32},
-    ...MONTHS.map(()=>({wch:9})),
-    {wch:8}, {wch:8}
-  ];
-
-  const wb = XLSX.utils.book_new();
-  const sheetLabel = areaSel === 'ALL' ? 'Rekap Tahunan' : areaSel.substring(0,31);
-  XLSX.utils.book_append_sheet(wb, ws, sheetLabel);
-
-  const areaLabel = areaSel === 'ALL' ? 'SemuaArea' : areaSel.replace(/[^a-zA-Z0-9]+/g,'');
-  XLSX.writeFile(wb, `Rekap_Tahunan_Coaching_${areaLabel}_Target${TARGET}.xlsx`);
-}
-
-document.getElementById('downloadTahunanBtn').addEventListener('click', downloadRekapTahunan);
+    document.getElementById('downloadTahunanBtn').addEventListener('click', downloadRekapTahunan);
     document.getElementById('downloadRekapBtn').addEventListener('click', downloadRekapExcel);
     populateRekapBulan();
 
