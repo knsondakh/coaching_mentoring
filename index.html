@@ -524,7 +524,7 @@
       <input type="file" id="fileInputMaster" accept=".xlsx,.xls">
     </div>
 
-   
+
 
 
 
@@ -550,7 +550,7 @@
       <button class="btn secondary" id="downloadTahunanBtn">⬇ Download Rekap Tahunan (Per Bulan)</button>
     </div>
 
-     <!-- tambahan -->
+    <!-- tambahan -->
     <div class="monthfilter" id="monthFilterBar">
       <span class="mf-label">Tampilkan Bulan:</span>
       <span class="mf-chip all active" data-month="ALL">Semua</span>
@@ -605,8 +605,14 @@
       return (STATUS_KEY[s] || { cls: 'menunggu' }).cls;
     }
 
+    // update v.1.2
+    function countDiterima(emp, bulan) {
+      const arr = emp.months[bulan] || [];
+      return arr.filter(s => s === 'Diterima').length;
+    }
+
     function computeTotal(emp) {
-      return MONTHS.reduce((sum, m) => sum + (emp.months[m] ? emp.months[m].length : 0), 0);
+      return MONTHS.reduce((sum, m) => sum + countDiterima(emp, m), 0);
     }
 
     // tambahan v.1
@@ -669,13 +675,14 @@
       const el = document.getElementById('statsRow');
       el.innerHTML = `
     <div class="stat"><div class="num">${total}</div><div class="lbl">Total Karyawan (Master)</div></div>
-    <div class="stat ok"><div class="num">${sudah}</div><div class="lbl">Sudah Coaching & Mentoring${labelSuffix}</div></div>
-    <div class="stat warn"><div class="num">${belum}</div><div class="lbl">Belum Coaching & Mentoring${labelSuffix}</div></div>
+    <div class="stat ok"><div class="num">${sudah}</div><div class="lbl">Status "Diterima"${labelSuffix}</div></div>
+    <div class="stat warn"><div class="num">${belum}</div><div class="lbl">Status "Menunggu Approval", "Dalam Proses", "Diajukan", "Ditolak"${labelSuffix}</div></div>
     <div class="stat"><div class="num">${totalInput}</div><div class="lbl">Total Input Tercatat${labelSuffix}</div></div>
   `;
     }
 
-    function renderRows(list) {
+    function renderRows(list, bulanSel) {
+      bulanSel = bulanSel || 'ALL';
       const body = document.getElementById('bodyRows');
       if (list.length === 0) {
         body.innerHTML = `<tr><td colspan="${5 + VISIBLE_MONTHS.length}"><div class="empty-state">Tidak ada data yang cocok dengan pencarian/filter.</div></td></tr>`;
@@ -683,7 +690,7 @@
       }
       let html = '';
       list.forEach((emp, idx) => {
-        const total = computeTotal(emp);
+        const total = getFilterCount(emp, bulanSel);
         const sisa = Math.max(TARGET - total, 0);
         const sudah = total > 0;
         html += '<tr>';
@@ -728,7 +735,7 @@
 
     function getFilterCount(emp, bulanSel) {
       if (bulanSel === 'ALL') return computeTotal(emp);
-      return (emp.months[bulanSel] || []).length;
+      return countDiterima(emp, bulanSel);
     }
 
     function applyFilters() {
@@ -745,13 +752,19 @@
         return true;
       });
       renderStats(list, bl);
-      renderRows(list);
+      renderRows(list, bl);
     }
 
     document.getElementById('searchBox').addEventListener('input', applyFilters);
     document.getElementById('areaFilter').addEventListener('change', applyFilters);
     document.getElementById('statusFilter').addEventListener('change', applyFilters);
-    document.getElementById('bulanFilter').addEventListener('change', applyFilters);
+    document.getElementById('bulanFilter').addEventListener('change', () => {
+      const bl = document.getElementById('bulanFilter').value;
+      VISIBLE_MONTHS = bl === 'ALL' ? [...MONTHS] : [bl];
+      updateMonthFilterUI();
+      renderHead();
+      applyFilters();
+    });
     document.getElementById('targetInput').addEventListener('input', (e) => {
       TARGET = parseInt(e.target.value) || 12;
       applyFilters();
@@ -899,9 +912,10 @@
         // Belum melakukan coaching & mentoring
         // - Jika bulan tertentu dipilih: cek kosong di bulan itu saja
         // - Jika "Semua Bulan" dipilih: cek kosong di sepanjang tahun (belum pernah sama sekali)
+        // update v.1.2
         const belumDiBulanIni = bulanSel === 'ALL'
           ? computeTotal(emp) === 0
-          : (emp.months[bulanSel] || []).length === 0;
+          : countDiterima(emp, bulanSel) === 0;
 
         if (belumDiBulanIni) {
           counters.belum += 1;
@@ -958,7 +972,7 @@
           emp.cabang || emp.unit || ''
         ];
         MONTHS.forEach(m => {
-          row.push((emp.months[m] || []).length);
+          row.push(countDiterima(emp, m));
         });
         row.push(total, sisa);
         aoa.push(row);
