@@ -45,6 +45,54 @@
       padding: 20px 22px 60px;
     }
 
+    .wrap.blurred {
+      filter: blur(6px);
+      transition: filter .2s ease;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    /* tambahan: skeleton loading */
+    @keyframes skeleton-shimmer {
+      0% { background-position: -400px 0; }
+      100% { background-position: 400px 0; }
+    }
+
+    .skeleton {
+      background: linear-gradient(90deg, #E4E7EC 25%, #F1F3F6 37%, #E4E7EC 63%);
+      background-size: 400px 100%;
+      animation: skeleton-shimmer 1.4s ease-in-out infinite;
+      border-radius: 6px;
+    }
+
+    .skeleton-stat {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+
+    .skeleton-stat .skeleton-num {
+      height: 22px;
+      width: 55%;
+      margin-bottom: 8px;
+    }
+
+    .skeleton-stat .skeleton-lbl {
+      height: 11px;
+      width: 80%;
+    }
+
+    tr.skeleton-row td {
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .skeleton-bar {
+      height: 14px;
+      width: 100%;
+    }
+
     .titlebar {
       display: flex;
       align-items: baseline;
@@ -105,14 +153,32 @@
 
     .toolbar {
       display: flex;
-      flex-wrap: wrap;
+      flex-direction: column;
       gap: 10px;
-      align-items: center;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 10px 12px;
       margin-bottom: 12px;
+    }
+
+    .toolbar-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .toolbar-row-bottom {
+      justify-content: space-between;
+    }
+
+    .toolbar-left,
+    .toolbar-right {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
     }
 
     .toolbar input[type=text] {
@@ -132,23 +198,6 @@
       font-size: 13px;
       color: var(--text);
       background: #fff;
-    }
-
-    .toolbar label.target {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12.5px;
-      color: var(--text-soft);
-    }
-
-    .toolbar input[type=number] {
-      width: 52px;
-      padding: 6px 6px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      font-size: 13px;
-      text-align: center;
     }
 
     /* tambahan */
@@ -207,6 +256,7 @@
       font-size: 12.5px;
       cursor: pointer;
       white-space: nowrap;
+      transition:  0.2s ease;
     }
 
     .btn.secondary {
@@ -215,7 +265,9 @@
     }
 
     .btn:hover {
-      opacity: .9;
+      background: green;
+  border-color: green;
+  color: #fff;
     }
 
     input[type=file] {
@@ -618,66 +670,45 @@
     <div class="stats" id="statsRow"></div>
 
     <div class="toolbar">
-      <input type="text" id="searchBox" placeholder="Cari nama atau NIK...">
-      <select id="areaFilter">
-        <option value="">Semua Area/Departemen</option>
-      </select>
-      <select id="statusFilter">
-        <option value="">Semua Status</option>
-        <option value="sudah">Sudah Coaching &amp; Mentoring</option>
-        <option value="belum">Belum Coaching &amp; Mentoring</option>
-      </select>
-      <!-- updated v.1.2 -->
-      <select id="bulanFilter">
-        <option value="ALL">Semua Bulan (Total Tahunan)</option>
-        <option value="Januari">Januari</option>
-        <option value="Februari">Februari</option>
-        <option value="Maret">Maret</option>
-        <option value="April">April</option>
-        <option value="Mei">Mei</option>
-        <option value="Juni">Juni</option>
-        <option value="Juli">Juli</option>
-        <option value="Agustus">Agustus</option>
-        <option value="September">September</option>
-        <option value="Oktober">Oktober</option>
-        <option value="November">November</option>
-        <option value="Desember">Desember</option>
-      </select>
-      <label class="target">Target/tahun
-        <input type="number" id="targetInput" value="12" min="1" max="24">
-      </label>
-      <button class="btn secondary" id="uploadLogBtn">Masukan Data Coaching baru</button>
-      <input type="file" id="fileInputLog" accept=".xlsx,.xls">
-      <button class="btn secondary" id="uploadMasterBtn">Masukan Data Karyawan baru</button>
-      <input type="file" id="fileInputMaster" accept=".xlsx,.xls">
-      <button class="btn" style="background:#fff;color:#DC2626;border-color:#DC2626" id="resetDataBtn">↺ Reset ke Data
-        Awal</button>
-    </div>
-
-
-
-
-
-    <!-- tambahan -->
-
-    <div class="exportbar">
-      <span class="exportbar-title">Download Rekap Excel:</span>
-      <select id="rekapBulan">
-        <option value="ALL">Semua Bulan</option>
-      </select>
-      <select id="rekapArea">
-        <option value="ALL">Semua Area/Departemen</option>
-        <option value="Bidang Operasional">Bidang Operasional</option>
-        <option value="Kantor Area Palu">Area Palu</option>
-        <option value="Kantor Area Gorontalo">Area Gorontalo</option>
-        <option value="Kantor Area Manado 1">Area Manado 1</option>
-        <option value="Kantor Area Manado 2">Area Manado 2</option>
-        <option value="Kantor Area Sorong">Area Sorong</option>
-        <option value="Kantor Area Jayapura">Area Jayapura</option>
-      </select>
-      <button class="btn" id="downloadRekapBtn">⬇ Download Excel</button>
-      <!-- update v.1.2 -->
-      <button class="btn secondary" id="downloadTahunanBtn">⬇ Download Rekap Tahunan (Per Bulan)</button>
+      <div class="toolbar-row toolbar-row-top">
+        <input type="text" id="searchBox" placeholder="Cari nama atau NIK...">
+        <select id="areaFilter">
+          <option value="">Semua Area/Departemen</option>
+        </select>
+        <select id="statusFilter">
+          <option value="">Semua Status</option>
+          <option value="sudah">Sudah Coaching &amp; Mentoring</option>
+          <option value="belum">Belum Coaching &amp; Mentoring</option>
+        </select>
+        <!-- updated v.1.2 -->
+        <select id="bulanFilter">
+          <option value="ALL">Semua Bulan (Total Tahunan)</option>
+          <option value="Januari">Januari</option>
+          <option value="Februari">Februari</option>
+          <option value="Maret">Maret</option>
+          <option value="April">April</option>
+          <option value="Mei">Mei</option>
+          <option value="Juni">Juni</option>
+          <option value="Juli">Juli</option>
+          <option value="Agustus">Agustus</option>
+          <option value="September">September</option>
+          <option value="Oktober">Oktober</option>
+          <option value="November">November</option>
+          <option value="Desember">Desember</option>
+        </select>
+      </div>
+      <div class="toolbar-row toolbar-row-bottom">
+        <div class="toolbar-left">
+          <button class="btn secondary" id="uploadLogBtn">Masukan Data Coaching baru</button>
+          <input type="file" id="fileInputLog" accept=".xlsx,.xls">
+          <button class="btn secondary" id="uploadMasterBtn">Masukan Data Karyawan baru</button>
+          <input type="file" id="fileInputMaster" accept=".xlsx,.xls">
+        </div>
+        <div class="toolbar-right">
+          <button class="btn" style="background:#fff;color:#DC2626;border-color:#DC2626" id="resetDataBtn">↺ Reset Data
+            Coaching & Mentoring</button>
+        </div>
+      </div>
     </div>
 
     <!-- tambahan -->
@@ -704,14 +735,44 @@
       </table>
     </div>
 
+    <!-- tambahan: dipindah ke bawah tabel -->
+    <div class="exportbar">
+      <span class="exportbar-title">Download Rekap Excel:</span>
+      <select id="rekapBulan">
+        <option value="ALL">Semua Bulan</option>
+      </select>
+      <select id="rekapArea">
+        <option value="ALL">Semua Area/Departemen</option>
+        <option value="Bidang Operasional">Bidang Operasional</option>
+        <option value="Kantor Area Palu">Area Palu</option>
+        <option value="Kantor Area Gorontalo">Area Gorontalo</option>
+        <option value="Kantor Area Manado 1">Area Manado 1</option>
+        <option value="Kantor Area Manado 2">Area Manado 2</option>
+        <option value="Kantor Area Sorong">Area Sorong</option>
+        <option value="Kantor Area Jayapura">Area Jayapura</option>
+      </select>
+      <button class="btn" id="downloadRekapBtn">⬇ Download Excel</button>
+      <button class="btn secondary" id="downloadTahunanBtn">⬇ Download Rekap Tahunan (Per Bulan)</button>
+    </div>
+
     <div class="modal-overlay" id="empModalOverlay">
       <div class="modal-box" id="empModalBox"></div>
     </div>
 
-    <div class="footnote">
-     
-    </div>
+  </div>
 
+  <!-- tambahan: popup wajib upload di awal akses, ditaruh di luar .wrap supaya tidak ikut ter-blur -->
+  <div class="modal-overlay" id="uploadPromptOverlay">
+    <div class="modal-box" id="uploadPromptBox">
+      <h2>Upload Data Coaching &amp; Mentoring</h2>
+      <p style="font-size:13px;color:var(--text-soft);line-height:1.5;margin:8px 0 18px;">
+       Upload file Excel data Coaching &amp; Mentoring terbaru untuk melihat rekap
+      </p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn" id="uploadPromptBtn">⬆ Upload Excel Coaching</button>
+        <button class="btn secondary" id="uploadPromptSkip">Lewati</button>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -771,6 +832,27 @@
 
     function computeTotal(emp) {
       return MONTHS.reduce((sum, m) => sum + countDiterima(emp, m), 0);
+    }
+
+    // tambahan: hasilkan objek "months" kosong (semua bulan = [])
+    function emptyMonths() {
+      const m = {};
+      MONTHS.forEach(mo => m[mo] = []);
+      return m;
+    }
+
+    // tambahan: kembalikan salinan karyawan dengan data Coaching & Mentoring dikosongkan,
+    // tapi identitas karyawan (nik, nama, jabatan, unit, cabang, area) tetap dipertahankan
+    function stripCoaching(employees) {
+      return employees.map(e => ({
+        nik: e.nik,
+        nama: e.nama,
+        jabatan: e.jabatan,
+        unit: e.unit,
+        cabang: e.cabang,
+        area: e.area,
+        months: emptyMonths()
+      }));
     }
 
     // tambahan v.1
@@ -923,23 +1005,16 @@
       renderHead();
       applyFilters();
     });
-    document.getElementById('targetInput').addEventListener('input', (e) => {
-      TARGET = parseInt(e.target.value) || 12;
-      applyFilters();
-    });
-    document.getElementById('targetInput').addEventListener('change', () => {
-      saveToStorage();
-    });
     document.getElementById('uploadLogBtn').addEventListener('click', () => document.getElementById('fileInputLog').click());
     document.getElementById('uploadMasterBtn').addEventListener('click', () => document.getElementById('fileInputMaster').click());
 
-    // update v.1.2
+    // update v.1.3: tombol ini sekarang hanya mengosongkan data Coaching & Mentoring,
+    // data karyawan (master) tetap dipertahankan
     document.getElementById('resetDataBtn').addEventListener('click', () => {
-      if (!confirm('Hapus data tersimpan & kembali ke Data Awal?')) return;
-      clearStorage();
-      MASTER_ROWS = null; LOG_ROWS = null; TARGET = 12;
-      document.getElementById('targetInput').value = 12;
-      EMPLOYEES = JSON.parse(JSON.stringify(DEFAULT_EMPLOYEES));
+      if (!confirm('Hapus seluruh data Coaching & Mentoring? Data karyawan (master) tidak akan terhapus, hanya rekap coaching-nya yang akan kosong.')) return;
+      LOG_ROWS = null;
+      EMPLOYEES = stripCoaching(EMPLOYEES);
+      saveToStorage();
       document.getElementById('lastUpdated').textContent = '';
       populateAreaFilter(); applyFilters();
     });
@@ -958,12 +1033,17 @@
     document.getElementById('fileInputLog').addEventListener('change', (ev) => {
       const file = ev.target.files[0];
       if (!file) return;
+      const fromPrompt = promptUploadInProgress;
       readXlsx(file, (err, wb) => {
         if (err) { alert('Gagal membaca file data coaching.\n' + err.message); return; }
         const sheetName = wb.SheetNames.includes('Data Mentah') ? 'Data Mentah' : wb.SheetNames[0];
         LOG_ROWS = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { defval: '' });
         rebuildEmployees();
         document.getElementById('lastUpdated').textContent = 'Data Coaching dimuat dari: ' + file.name;
+        hideUploadPrompt();
+        if (fromPrompt) {
+          showLoadingThenRender(3000);
+        }
       });
     });
 
@@ -1241,6 +1321,64 @@
     document.getElementById('empModalOverlay').addEventListener('click', (e) => {
       if (e.target.id === 'empModalOverlay') closeEmployeeModal();
     });
+
+    // tambahan: popup wajib-upload saat data Coaching & Mentoring masih kosong
+    function hasAnyCoachingData() {
+      return EMPLOYEES.some(emp => MONTHS.some(m => (emp.months[m] || []).length > 0));
+    }
+
+    function showUploadPrompt() {
+      document.getElementById('uploadPromptOverlay').classList.add('active');
+      document.querySelector('.wrap').classList.add('blurred');
+    }
+
+    let promptUploadInProgress = false;
+
+    function hideUploadPrompt() {
+      document.getElementById('uploadPromptOverlay').classList.remove('active');
+      document.querySelector('.wrap').classList.remove('blurred');
+      promptUploadInProgress = false;
+    }
+
+    // tambahan: skeleton loading di scorecard & tabel selama proses data baru "dimuat"
+    function renderStatsSkeleton() {
+      const el = document.getElementById('statsRow');
+      let html = '';
+      for (let i = 0; i < 4; i++) {
+        html += `<div class="skeleton-stat">
+          <div class="skeleton skeleton-num"></div>
+          <div class="skeleton skeleton-lbl"></div>
+        </div>`;
+      }
+      el.innerHTML = html;
+    }
+
+    function renderTableSkeleton() {
+      const body = document.getElementById('bodyRows');
+      const colspan = 5 + VISIBLE_MONTHS.length;
+      let html = '';
+      for (let i = 0; i < 8; i++) {
+        html += `<tr class="skeleton-row"><td colspan="${colspan}"><div class="skeleton skeleton-bar"></div></td></tr>`;
+      }
+      body.innerHTML = html;
+    }
+
+    function showLoadingThenRender(durationMs) {
+      renderStatsSkeleton();
+      renderTableSkeleton();
+      setTimeout(() => {
+        applyFilters();
+      }, durationMs);
+    }
+
+    document.getElementById('uploadPromptBtn').addEventListener('click', () => {
+      promptUploadInProgress = true;
+      document.getElementById('fileInputLog').click();
+    });
+    document.getElementById('uploadPromptSkip').addEventListener('click', hideUploadPrompt);
+    document.getElementById('uploadPromptOverlay').addEventListener('click', (e) => {
+      if (e.target.id === 'uploadPromptOverlay') hideUploadPrompt();
+    });
     document.getElementById('downloadRekapBtn').addEventListener('click', downloadRekapExcel);
     populateRekapBulan();
 
@@ -1253,12 +1391,18 @@
     if (stored && stored.employees && stored.employees.length > 0) {
       EMPLOYEES = stored.employees;
       TARGET = stored.target || 12;
-      document.getElementById('targetInput').value = TARGET;
     } else {
-      EMPLOYEES = JSON.parse(JSON.stringify(DEFAULT_EMPLOYEES));
+      // pertama kali akses (belum ada data tersimpan): data karyawan tetap ada,
+      // tapi data Coaching & Mentoring dikosongkan sampai user upload file coaching
+      EMPLOYEES = stripCoaching(DEFAULT_EMPLOYEES);
     }
     populateAreaFilter();
     applyFilters();
+
+    // tambahan: tampilkan popup upload kalau belum ada data Coaching & Mentoring sama sekali
+    if (!hasAnyCoachingData()) {
+      showUploadPrompt();
+    }
   </script>
 </body>
 
