@@ -256,7 +256,6 @@
       font-size: 12.5px;
       cursor: pointer;
       white-space: nowrap;
-      transition:  0.2s ease;
     }
 
     .btn.secondary {
@@ -265,9 +264,7 @@
     }
 
     .btn:hover {
-      background: green;
-  border-color: green;
-  color: #fff;
+      opacity: .9;
     }
 
     input[type=file] {
@@ -766,7 +763,9 @@
     <div class="modal-box" id="uploadPromptBox">
       <h2>Upload Data Coaching &amp; Mentoring</h2>
       <p style="font-size:13px;color:var(--text-soft);line-height:1.5;margin:8px 0 18px;">
-       Upload file Excel data Coaching &amp; Mentoring terbaru untuk melihat rekap
+        Belum ada data Coaching &amp; Mentoring yang dimuat. Upload file Excel data Coaching &amp; Mentoring
+        terbaru untuk mulai melihat rekap, atau lewati untuk menjelajah dashboard dengan data kosong
+        terlebih dahulu.
       </p>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <button class="btn" id="uploadPromptBtn">⬆ Upload Excel Coaching</button>
@@ -863,7 +862,7 @@
         const i = MONTHS.indexOf(m);
         html += `<th class="monthcol">${MONTH_SHORT[i]}</th>`;
       });
-      html += '<th style="text-align:center">Total Diterima</th><th style="text-align:center">Sisa</th><th>Status</th>';
+      html += '<th style="text-align:center">Total</th><th style="text-align:center">Sisa</th><th>Status</th>';
       headRow.innerHTML = html;
     }
 
@@ -1123,6 +1122,9 @@
       return 'proses';
     }
 
+    // tambahan: urutan status pada sheet "Belum (Proses)"
+    const PROSES_SORT_ORDER = { 'Menunggu Approval': 1, 'Dalam Proses': 2, 'Diajukan': 3 };
+
     function rowsToSheet(rows) {
       const header = ['No', 'NIK', 'Nama', 'Unit Kerja', 'Status'];
       const aoa = [header];
@@ -1132,7 +1134,7 @@
       return ws;
     }
 
-    // update v.1.2
+    // update v.1.4
     function downloadRekapExcel() {
       const bulanSel = document.getElementById('rekapBulan').value;
       const areaSel = document.getElementById('rekapArea').value;
@@ -1162,15 +1164,16 @@
           });
         });
 
-        // Belum melakukan coaching & mentoring
-        // - Jika bulan tertentu dipilih: cek kosong di bulan itu saja
-        // - Jika "Semua Bulan" dipilih: cek kosong di sepanjang tahun (belum pernah sama sekali)
-        // update v.1.2
-        const belumDiBulanIni = bulanSel === 'ALL'
-          ? computeTotal(emp) === 0
-          : countDiterima(emp, bulanSel) === 0;
+        // Belum melakukan coaching & mentoring SAMA SEKALI (tidak ada indikator
+        // status apa pun: Diterima, Menunggu Approval, Dalam Proses, Diajukan, Ditolak)
+        // - Jika bulan tertentu dipilih: cek tidak ada entri apa pun di bulan itu
+        // - Jika "Semua Bulan" dipilih: cek tidak ada entri apa pun sepanjang tahun
+        // update v.1.4
+        const hasAnyEntry = bulanSel === 'ALL'
+          ? MONTHS.some(m => (emp.months[m] || []).length > 0)
+          : (emp.months[bulanSel] || []).length > 0;
 
-        if (belumDiBulanIni) {
+        if (!hasAnyEntry) {
           counters.belum += 1;
           grouped.belum.push({
             no: counters.belum,
@@ -1181,6 +1184,10 @@
           });
         }
       });
+
+      // tambahan: urutkan sheet "Belum (Proses)" -> Menunggu Approval, Dalam Proses, Diajukan
+      grouped.proses.sort((a, b) => (PROSES_SORT_ORDER[a.status] || 99) - (PROSES_SORT_ORDER[b.status] || 99));
+      grouped.proses.forEach((r, idx) => { r.no = idx + 1; });
 
       const totalRows = grouped.sudah.length + grouped.proses.length + grouped.ditolak.length + grouped.belum.length;
       if (totalRows === 0) {
